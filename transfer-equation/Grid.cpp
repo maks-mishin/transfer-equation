@@ -4,26 +4,28 @@
 #include "Grid.h"
 
 
-GridHeat::GridHeat()
+Grid::Grid()
 {
 }
 
 //Initialize grid
-GridHeat::GridHeat(double _a, double _dx)
+Grid::Grid(double _lower_bound, double _upper_bound, double _dx)
 {
-	a = _a;
+	lower_bound = _lower_bound;
+	upper_bound = _upper_bound;
+
 	dx = _dx;
 
-	for (double i = 0; i < a; i += dx)
+	for (double i = 0; i < (upper_bound - lower_bound); i += dx)
 	{
 		grid_x.push_back(i);
 		steps_x++;
 	}
 
-	grid_x.push_back(a);
+	grid_x.push_back(upper_bound);
 	steps_x++;
 }
 
-GridHeat::~GridHeat()
+Grid::~Grid()
 {
 }

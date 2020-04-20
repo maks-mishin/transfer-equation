@@ -1,28 +1,49 @@
 #pragma once
 #include "Grid.h"
 
-class TaskHeat
+class Task
 {
 public:
-	TaskHeat(const double _time_max, const double _dx, const double _K);
-	~TaskHeat();
+	/*
+		Constructor
+		@param _time_max - max time of calculation
+		@param dt - step for time
+		@param _K - Courant number
+		@param task_name - number of task (to reduce the time spent working with the program)
+	*/
+	Task(const double _time_max, const double _dx, const double _K, std::string task_number);
+	~Task();
 
-	void set_init_conditions(const double _K);
-	void compute(const double _K);
+	/*
+		Function for set init and boundary conditions
+		@param _K - Courant number
+		@param task_number - number of task
+	*/
+	void set_init_conditions(const double _K, std::string task_number);
+	
+	/*
+		Main function of calculating
+		@param _K - Courant number
+	*/
+	void compute(const double _K, std::string task_number);
 
-	void write_values(std::string file_name);
+	/*
+		Function for record values to out file
+	*/
+	void record_values(std::string file_name);
 
 
 private:
-	GridHeat grid;
+	Grid grid; // three-dimensional mesh
 
-	int size_x;
-	const double a = 0.5;
+	int size_x; // size of arrays
+	const double a = 0.5; // const by du/dx
 
-	double *U_n = nullptr;
-	double *U_n1 = nullptr;
-	double *tmp = nullptr;
+	/*arrays for numerical solution*/
+	double *U_n; // layer U(n)
+	double *U_n1; // layer U(n+1)
+	double *U_n_1; // layer U(n-1)
 
-	double time_max;
-	double dt;
+	double time_max; // max time of calculation
+	double dt; // step for time
 };

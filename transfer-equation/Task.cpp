@@ -1,82 +1,87 @@
-﻿#include <fstream>
-#include "Task.h"
-#include <iostream>
+﻿#include <iostream>
 #include <vector>
+#include <fstream>
 #include <algorithm>
 #include <string>
 #include <math.h>
+#include "Task.h"
+#include "solver.h"
 
 using namespace std;
 
-void print(double *U, int size)
-{
-	for (int i = 0; i < size; i++)
-	{
-		cout << U[i] << " ";
-		if (i % 10 == 0)
-			cout << endl;
-	}
-}
-
-TaskHeat::TaskHeat(const double _time_max, const double _dx, const double _K)
+Task::Task(const double _time_max, const double _dx, const double _K, std::string task_number)
 {
 	time_max = _time_max;
-	grid = GridHeat(2.0, _dx);
+	grid = Grid(0.0, 2.0, _dx);
 
-	set_init_conditions(_K);
+	set_init_conditions(_K, task_number);
 }
 
-TaskHeat::~TaskHeat()
+Task::~Task()
 {
+	delete [] U_n_1;
+	U_n_1 = nullptr;
 
+	delete [] U_n;
+	U_n = nullptr;
+	
+	delete [] U_n1;
+	U_n1 = nullptr;
 }
 
-/*
- * Function for calculation step
- * @params
- */
-void step_calculation(double *U_n1, double *U_n, const double _K, const int size_x)
+void Task::set_init_conditions(const double _K, std::string task_number)
 {
-	double* temp = U_n1; // на входе слой n
-	for (int i = 1; i < size_x - 1; i++)
-	{
-		temp[i] = U_n[i] - _K*(U_n1[i + 1] - U_n1[i - 1]);
-	}
-	U_n1 = temp; // на выходе слой n+1
-}
-
-void TaskHeat::set_init_conditions(const double _K)
-{
+	// allocate memory for arrays
 	size_x = grid.steps_x;
 
 	U_n = new double[size_x];
 	U_n1 = new double[size_x];
+	U_n_1 = new double[size_x];
 
-	for (int i = 0; i < size_x; i++)
+	if (task_number == "task_1")
 	{
-		U_n[i] = 0;
-		U_n1[i] = 0;
-
-		if (grid.grid_x[i] >= 0.25 && grid.grid_x[i] <= 0.75)
+		for (int i = 0; i < size_x; i++)
 		{
-			U_n[i] = 1;
-			U_n1[i] = 1;
-		}
+			U_n[i] = 0;
+			U_n1[i] = 0;
+			U_n_1[i] = 0;
 
-		/*U_n[i] = exp(-16 * (grid.grid_x[i] - 0.5))*sin(grid.grid_x[i] * atan(1.0)/(4*grid.dx));
-		U_n1[i] = 0;// exp(-16 * (grid.grid_x[i] - 0.5))*sin(grid.grid_x[i] * atan(1.0) / (4 * grid.dx));
-		*/
-		//U_n[i] = exp(-3.2*(grid.grid_x[i] - 0.5));
-		//U_n1[i] = 0;
+			if (grid.grid_x[i] >= 0.25 && grid.grid_x[i] <= 0.75)
+			{
+				U_n_1[i] = 1;
+			}
+		}
+	}
+	else if (task_number == "task_2")
+	{
+		for (int i = 0; i < size_x; i++)
+		{
+			U_n[i] = 0;
+			U_n1[i] = 0;
+			U_n_1[i] = 0;
+
+			U_n_1[i] = exp(-16 * pow((grid.grid_x[i] - 0.5), 2))*sin(grid.grid_x[i] * (2*atan(1.0)*4)/(8*grid.dx));
+		}
+	}
+	else if (task_number == "task_3")
+	{
+		for (int i = 0; i < size_x; i++)
+		{
+			U_n[i] = 0;
+			U_n1[i] = 0;
+			U_n_1[i] = 0;
+
+			U_n_1[i] = exp(-3200 * pow((grid.grid_x[i] - 0.5), 2));
+		}
 	}
 
 	for (int i = 1; i < size_x; i++)
 	{
-		U_n1[i] = U_n[i] - _K*(U_n[i] - U_n[i - 1]);
+		U_n[i] = U_n_1[i] - _K*(U_n_1[i] - U_n_1[i - 1]);
 	}
 }
 
-void TaskHeat::compute(const double _K)
+void Task::compute(const double _K, string task_number)
 {
 	dt = grid.dx * _K / a;
 
@@ -86,19 +91,25 @@ void TaskHeat::compute(const double _K)
 		if (time_max - current_time < dt)
 			dt = time_max - current_time;
 
-		// на входе Un1 = U(n=1)
-		tmp = U_n1;
-		step_calculation(U_n1, U_n, _K, size_x);
+		step_calculation(U_n1, U_n, U_n_1, _K, size_x);
 
-		U_n = tmp;
-		// на выходе Un1 = U(n=2)
+		// swap arrays
+		for (int i = 0; i < size_x; i++)
+		{
+			U_n_1[i] = U_n[i];
+		}
+
+		for (int i = 0; i < size_x; i++)
+		{
+			U_n[i] = U_n1[i];
+		}
 
 		current_time += dt;
 
-	} while (current_time  < time_max);
+	} while (current_time < time_max);
 }
 
-void TaskHeat::write_values(string file_name)
+void Task::record_values(string file_name)
 {
 	std::ofstream out;
 	out.open(file_name);
@@ -110,7 +121,7 @@ void TaskHeat::write_values(string file_name)
 	{
 		for (int i = 0; i < size_x; i++)
 		{
-			out << U_n[i] << endl;
+			out << U_n1[i] << endl;
 		}
 	}
 	out.close();

@@ -2,24 +2,35 @@
 
 #include <vector>
 
-class GridHeat
+class Grid
 {
 public:
-	GridHeat();
-	GridHeat(double a, double dx);
-	~GridHeat();
+	/*
+		Default constructor
+	*/
+	Grid();
+
+	/*
+		Constructor
+		@param _dx - step on X
+	*/
+	Grid(double lower_bound, double upper_bound, double _dx);
+	~Grid();
 
 	std::vector<double> get_grid_x() { return grid_x; }
+	
+	// spatial mesh
 	std::vector<double> grid_x;
 
 	int get_steps_x() { return steps_x; }
 
-	// Step on X and Y
+	// step on X
 	double dx;
 
-	//Amount of steps on X and Y
+	// amount of steps on X and Y
 	int steps_x = 0;
 
-	//Boundary of area
-	double a;
+	// boundaries of area
+	double lower_bound;
+	double upper_bound;
 };
